@@ -21,5 +21,41 @@ namespace HumanResourcesManagement
         {
 
         }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblUsuario_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnSalir_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void btnIniciarSesion_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtUsuario.Text) ||
+                string.IsNullOrWhiteSpace(txtContrasena.Text))
+            {
+                MessageBox.Show(
+                    "El usuario y la contraseña son obligatorios.",
+                    "Datos incompletos",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
+                return;
+            }
+        }
     }
 }
