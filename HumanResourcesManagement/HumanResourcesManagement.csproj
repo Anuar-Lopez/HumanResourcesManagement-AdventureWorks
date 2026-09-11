@@ -47,6 +47,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConexionSQL.cs" />
+    <Compile Include="FrmDepartamentos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmDepartamentos.Designer.cs">
+      <DependentUpon>FrmDepartamentos.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmDirectorioEmpleados.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -61,6 +67,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FrmDepartamentos.resx">
+      <DependentUpon>FrmDepartamentos.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FrmDirectorioEmpleados.resx">
       <DependentUpon>FrmDirectorioEmpleados.cs</DependentUpon>
     </EmbeddedResource>

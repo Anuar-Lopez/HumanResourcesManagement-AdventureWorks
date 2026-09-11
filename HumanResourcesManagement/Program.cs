@@ -16,7 +16,7 @@ namespace HumanResourcesManagement
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FrmDirectorioEmpleados());
+            Application.Run(new FrmDepartamentos());
         }
     }
 }
