@@ -46,7 +46,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusEmpl.cs" />
+    <Compile Include="BusEmpl.Designer.cs">
+      <DependentUpon>BusEmpl.cs</DependentUpon>
+    </Compile>
     <Compile Include="ConexionSQL.cs" />
+    <Compile Include="FrmConEmpl.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmConEmpl.Designer.cs">
+      <DependentUpon>FrmConEmpl.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmDepartamentos.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -71,8 +81,15 @@
     <Compile Include="FrmPayHistory.Designer.cs">
       <DependentUpon>FrmPayHistory.cs</DependentUpon>
     </Compile>
+    <Compile Include="obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="BusEmpl.resx">
+      <DependentUpon>BusEmpl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmConEmpl.resx">
+      <DependentUpon>FrmConEmpl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FrmDepartamentos.resx">
       <DependentUpon>FrmDepartamentos.cs</DependentUpon>
     </EmbeddedResource>
@@ -94,6 +111,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="obj\Debug\DesignTimeResolveAssemblyReferencesInput.cache" />
+    <None Include="obj\Debug\HumanResourcesManagement.csproj.AssemblyReference.cache" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -106,6 +125,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Debug\" />
+    <Folder Include="obj\Debug\TempPE\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
