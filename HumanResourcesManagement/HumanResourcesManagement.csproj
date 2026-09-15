@@ -95,6 +95,9 @@
     <EmbeddedResource Include="BusEmpl.resx">
       <DependentUpon>BusEmpl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FrmConDepaTurnos.resx">
+      <DependentUpon>FrmConDepaTurnos.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FrmConEmpl.resx">
       <DependentUpon>FrmConEmpl.cs</DependentUpon>
     </EmbeddedResource>

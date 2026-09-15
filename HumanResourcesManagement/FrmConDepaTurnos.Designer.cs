@@ -30,6 +30,7 @@
         {
             this.cmbDepartamento = new System.Windows.Forms.ComboBox();
             this.tablaNombre = new System.Windows.Forms.DataGridView();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.tablaNombre)).BeginInit();
             this.SuspendLayout();
             // 
@@ -52,12 +53,21 @@
             this.tablaNombre.Size = new System.Drawing.Size(740, 330);
             this.tablaNombre.TabIndex = 1;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(30, 8);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(360, 16);
+            this.label1.TabIndex = 2;
+            this.label1.Text = "Selecciona un Departamento para ver sus detalles de turno";
+            // 
             // FrmConDepaTurnos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
-            this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.tablaNombre);
             this.Controls.Add(this.cmbDepartamento);
             this.Name = "FrmConDepaTurnos";
@@ -65,11 +75,14 @@
             this.Load += new System.EventHandler(this.frmConDepaTurnos_Load);
             ((System.ComponentModel.ISupportInitialize)(this.tablaNombre)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
+
         }
 
         #endregion
 
         private System.Windows.Forms.ComboBox cmbDepartamento;
         private System.Windows.Forms.DataGridView tablaNombre;
+        private System.Windows.Forms.Label label1;
     }
 }
