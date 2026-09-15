@@ -46,11 +46,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BusEmpl.cs" />
+    <Compile Include="BusEmpl.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="BusEmpl.Designer.cs">
       <DependentUpon>BusEmpl.cs</DependentUpon>
     </Compile>
     <Compile Include="ConexionSQL.cs" />
+    <Compile Include="FrmConDepaTurnos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmConDepaTurnos.Designer.cs">
+      <DependentUpon>FrmConDepaTurnos.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmConEmpl.cs">
       <SubType>Form</SubType>
     </Compile>

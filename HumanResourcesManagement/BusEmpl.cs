@@ -100,5 +100,14 @@ namespace DirectorioRRHH
                 }
             }
         }
+
+        private void btnVolverMP_Click(object sender, EventArgs e)
+        {
+          //  Form2 nuevoFormulario = new Form2();
+
+            //nuevoFormulario.Show();
+
+            this.Hide();
+        }
     }
 }

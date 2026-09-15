@@ -38,6 +38,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
+            this.btnVolverMP = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.tablaNombre)).BeginInit();
             this.SuspendLayout();
             // 
@@ -123,11 +124,22 @@
             this.label5.TabIndex = 9;
             this.label5.Text = "Cargo";
             // 
+            // btnVolverMP
+            // 
+            this.btnVolverMP.Location = new System.Drawing.Point(509, 391);
+            this.btnVolverMP.Name = "btnVolverMP";
+            this.btnVolverMP.Size = new System.Drawing.Size(190, 23);
+            this.btnVolverMP.TabIndex = 10;
+            this.btnVolverMP.Text = "Volver al Menú Principal";
+            this.btnVolverMP.UseVisualStyleBackColor = true;
+            this.btnVolverMP.Click += new System.EventHandler(this.btnVolverMP_Click);
+            // 
             // BusEmpl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnVolverMP);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -158,5 +170,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button btnVolverMP;
     }
 }
