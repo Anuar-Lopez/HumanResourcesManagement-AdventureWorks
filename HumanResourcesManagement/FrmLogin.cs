@@ -15,7 +15,7 @@ namespace HumanResourcesManagement
     public partial class FrmLogin : Form
     {
         private string cadenaConexion =
-  @"Server=DESKTOP-68JDOQ8\SQLEXPRESS;
+  @"Server=PCJuan\SQLEXPRESS;
       Database=AdventureWorksLT2022;
       Trusted_Connection=True;";
         public FrmLogin()
@@ -47,10 +47,10 @@ namespace HumanResourcesManagement
         {
             Application.Exit();
         }
-
+        
         private void btnIniciarSesion_Click(object sender, EventArgs e)
         {
-            // 1. Validar campos obligatorios
+            // 1. Validar campos 
             if (string.IsNullOrWhiteSpace(txtUsuario.Text) ||
                 string.IsNullOrWhiteSpace(txtContrasena.Text))
             {
@@ -128,6 +128,8 @@ namespace HumanResourcesManagement
                     MessageBoxIcon.Error
                 );
             }
+            txtUsuario.Clear();
+            txtContrasena.Clear();
         }
     }
 }

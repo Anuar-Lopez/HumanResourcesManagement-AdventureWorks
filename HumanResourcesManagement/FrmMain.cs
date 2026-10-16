@@ -52,5 +52,78 @@ namespace HumanResourcesManagement
                 this.Close();
             }
         }
+
+        private void empleadosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //FormUsuarios ventanaUsuarios = new FormUsuarios();
+
+            // 2. Mostrar el formulario
+            //ventanaUsuarios.Show(); // o ventanaUsuarios.ShowDialog();
+        }
+
+        private void cerrarSesiónToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            DialogResult resultado = MessageBox.Show(
+                "¿Está seguro de que desea cerrar sesión?",
+                "Cerrar sesión",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (resultado == DialogResult.Yes)
+            {
+                // Limpiar los datos de la sesión
+                SesionUsuario.IdUsuario = 0;
+                SesionUsuario.Usuario = null;
+                SesionUsuario.Rol = null;
+
+                // Mostrar nuevamente el Login
+                formularioLogin.Show();
+
+                // Cerrar el formulario principal
+                this.Close();
+            }
+        }
+
+        private void directorioDeEmpleadosToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            
+            FrmDirectorioEmpleados formulario = new FrmDirectorioEmpleados();
+
+            
+            formulario.Show(); 
+        }
+
+        private void gestiónDeDepartamentosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FrmDepartamentos formulario = new FrmDepartamentos();
+
+
+            formulario.Show();
+        }
+
+        private void consultarHistorialSalarialToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FrmPayHistory formulario = new FrmPayHistory();
+
+
+            formulario.Show();
+        }
+
+        private void gestiónDeCandidatosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //FrmDirectorioEmpleados formulario = new FrmDirectorioEmpleados();
+
+
+            //formulario.Show();
+        }
+
+        private void irAInicioToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //FrmMain formulario = new FrmMain();
+
+
+            //formulario.Show();
+        }
     }
 }
