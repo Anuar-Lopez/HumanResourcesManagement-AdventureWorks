@@ -5,8 +5,9 @@ namespace HumanResourcesManagement
 {
     public static class ConexionSQL
     {
-        
-        private static readonly string CadenaConexion = @"Server=.\SQLEXPRESS;Database=AdventureWorks2008;Integrated Security=True;TrustServerCertificate=True;";
+
+        private static readonly string CadenaConexion =
+    @"Server=.\SQLEXPRESS;Database=AdventureWorksLT2022;Integrated Security=True;";
 
         public static SqlConnection ObtenerConexion()
         {
