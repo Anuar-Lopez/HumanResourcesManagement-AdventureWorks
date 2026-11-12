@@ -2,230 +2,559 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace HumanResourcesManagement
 {
+    /// <summary>
+    /// Consulta del historial salarial de un empleado y registro
+    /// de nuevos cambios de tarifa.
+    /// </summary>
     public partial class FrmPayHistory : Form
     {
-        private Panel panelSuperior;
-        private Label lblBusinessEntityID;
-        private TextBox txtBusinessEntityID;
-        private Button btnBuscar;
+        // Frecuencias de pago de AdventureWorks: 1 = mensual, 2 = quincenal.
+        private class ItemFrecuencia
+        {
+            public string Texto;
+            public byte Valor;
 
-        private GroupBox gbNuevoRegistro;
-        private Label lblRateChangeDate;
-        private DateTimePicker dtpRateChangeDate;
-        private Label lblRate;
-        private TextBox txtRate;
-        private Label lblPayFrequency;
-        private ComboBox cbPayFrequency;
-        private Button btnGuardar;
+            public override string ToString()
+            {
+                return Texto;
+            }
+        }
 
-        private DataGridView dgvPayHistory;
-        private Button btnSalir;
+        private TextBox txtId;
+        private Label lblResumen;
+        private Label lblTotal;
+
+        private DateTimePicker dtpFecha;
+        private TextBox txtTarifa;
+        private ComboBox cmbFrecuencia;
+
+        private DataGridView dgvHistorial;
 
         public FrmPayHistory()
         {
             InitializeComponent();
+
             ConstruirInterfaz();
-            ConfigurarDataGridView();
+        }
+
+        private void FrmPayHistory_Load(object sender, EventArgs e)
+        {
+            txtId.Focus();
         }
 
         private void ConstruirInterfaz()
         {
-            this.Text = "Gestión de Historial Salarial (Pay History)";
-            this.Size = new Size(900, 550);
+            this.Text = "Historial salarial - AdventureWorks";
+            this.Size = new Size(1200, 750);
+            this.MinimumSize = new Size(1000, 650);
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = EstiloUI.Fondo;
+            this.Font = new Font("Segoe UI", 9F);
 
-            // Panel Superior: Búsqueda
-            panelSuperior = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Color.FromArgb(240, 240, 240) };
+            Panel encabezado = EstiloUI.CrearEncabezado(
+                "Historial salarial",
+                "Consulta los cambios de tarifa de un empleado y registra nuevos.",
+                out lblTotal);
 
-            lblBusinessEntityID = new Label { Text = "ID Empleado:", Location = new Point(15, 20), AutoSize = true, Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
-            txtBusinessEntityID = new TextBox { Location = new Point(105, 17), Width = 100, Font = new Font("Segoe UI", 9.5F) };
-            btnBuscar = new Button { Text = "Consultar", Location = new Point(215, 15), Height = 30, Width = 90, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(30, 61, 89), ForeColor = Color.White };
+            lblTotal.Text = "Registros encontrados: 0";
 
-            btnBuscar.Click += (s, e) => CargarHistorial();
-            txtBusinessEntityID.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { btnBuscar.PerformClick(); e.SuppressKeyPress = true; } };
-
-            panelSuperior.Controls.AddRange(new Control[] { lblBusinessEntityID, txtBusinessEntityID, btnBuscar });
-
-            // GroupBox: Nuevo Registro
-            gbNuevoRegistro = new GroupBox
+            // PANEL DE ACCIONES
+            Panel panelAcciones = new Panel
             {
-                Text = " Registrar Nuevo Cambio Salarial ",
                 Dock = DockStyle.Top,
-                Height = 100,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+                Height = 75,
+                BackColor = EstiloUI.Fondo
             };
 
-            lblRateChangeDate = new Label { Text = "Fecha Cambio:", Location = new Point(15, 30), AutoSize = true, Font = new Font("Segoe UI", 8.5F, FontStyle.Regular) };
-            dtpRateChangeDate = new DateTimePicker { Location = new Point(15, 52), Width = 130, Format = DateTimePickerFormat.Short, Font = new Font("Segoe UI", 9F, FontStyle.Regular) };
+            Button btnExportar = EstiloUI.CrearBoton(
+                "Exportar CSV", 20, 17, 130,
+                EstiloUI.Verde, Color.White);
 
-            lblRate = new Label { Text = "Tarifa (Rate):", Location = new Point(160, 30), AutoSize = true, Font = new Font("Segoe UI", 8.5F, FontStyle.Regular) };
-            txtRate = new TextBox { Location = new Point(160, 52), Width = 110, Font = new Font("Segoe UI", 9F, FontStyle.Regular) };
+            Button btnVolver = EstiloUI.CrearBoton(
+                "Volver al menú principal", 970, 17, 195,
+                EstiloUI.Marino, Color.White);
 
-            lblPayFrequency = new Label { Text = "Frecuencia de Pago:", Location = new Point(285, 30), AutoSize = true, Font = new Font("Segoe UI", 8.5F, FontStyle.Regular) };
-            cbPayFrequency = new ComboBox { Location = new Point(285, 52), Width = 160, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9F, FontStyle.Regular) };
+            btnVolver.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
-            // Frecuencias según AdventureWorks (1 = Mensual, 2 = Quincenal/Bimensual)
-            cbPayFrequency.Items.Add(new { Text = "1 - Mensual", Value = 1 });
-            cbPayFrequency.Items.Add(new { Text = "2 - Quincenal", Value = 2 });
-            cbPayFrequency.DisplayMember = "Text";
-            cbPayFrequency.ValueMember = "Value";
-            cbPayFrequency.SelectedIndex = 0;
+            btnExportar.Click += (s, e) =>
+            {
+                string sufijo = txtId.Text.Trim();
 
-            btnGuardar = new Button { Text = "Guardar Registro", Location = new Point(460, 48), Height = 30, Width = 130, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(40, 167, 69), ForeColor = Color.White, Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
+                ExportadorCSV.ExportarDataGridView(
+                    dgvHistorial,
+                    "Historial_Salarial_" + sufijo);
+            };
+
+            btnVolver.Click += (s, e) => this.Close();
+
+            panelAcciones.Controls.Add(btnExportar);
+            panelAcciones.Controls.Add(btnVolver);
+
+            // PANEL DE CONSULTA
+            Panel panelConsulta = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 100,
+                BackColor = Color.White
+            };
+
+            txtId = EstiloUI.CrearTexto(25, 40, 120);
+            txtId.MaxLength = 9;
+
+            txtId.KeyPress += (s, e) =>
+            {
+                // Solo números en el campo ID.
+                if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+                    e.Handled = true;
+            };
+
+            txtId.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    CargarHistorial();
+                    e.SuppressKeyPress = true;
+                }
+            };
+
+            Button btnConsultar = EstiloUI.CrearBoton(
+                "Consultar", 160, 36, 110,
+                EstiloUI.Acento, Color.White);
+
+            btnConsultar.Click += (s, e) => CargarHistorial();
+
+            lblResumen = new Label
+            {
+                Location = new Point(295, 36),
+                Size = new Size(850, 45),
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = EstiloUI.Marino,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left |
+                         AnchorStyles.Right,
+                Text = "Ingresa el ID de un empleado y presiona Consultar."
+            };
+
+            panelConsulta.Controls.Add(
+                EstiloUI.CrearEtiqueta("ID del empleado:", 25, 12));
+            panelConsulta.Controls.Add(txtId);
+            panelConsulta.Controls.Add(btnConsultar);
+            panelConsulta.Controls.Add(lblResumen);
+
+            // PANEL DE NUEVO REGISTRO
+            Panel panelNuevo = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 100,
+                BackColor = EstiloUI.Fondo
+            };
+
+            dtpFecha = new DateTimePicker
+            {
+                Location = new Point(25, 45),
+                Size = new Size(160, 30),
+                Format = DateTimePickerFormat.Short,
+                Font = new Font("Segoe UI", 10F),
+                Value = DateTime.Today
+            };
+
+            txtTarifa = EstiloUI.CrearTexto(205, 45, 150);
+
+            cmbFrecuencia = EstiloUI.CrearCombo(375, 45, 190);
+
+            cmbFrecuencia.Items.Add(new ItemFrecuencia
+            {
+                Texto = "1 - Mensual",
+                Valor = 1
+            });
+
+            cmbFrecuencia.Items.Add(new ItemFrecuencia
+            {
+                Texto = "2 - Quincenal",
+                Valor = 2
+            });
+
+            cmbFrecuencia.SelectedIndex = 0;
+
+            Button btnGuardar = EstiloUI.CrearBoton(
+                "Guardar registro", 585, 40, 160,
+                EstiloUI.Acento, Color.White);
+
             btnGuardar.Click += (s, e) => GuardarNuevoHistorial();
 
-            btnSalir = new Button { Text = "Salir", Location = new Point(760, 48), Height = 30, Width = 100, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(220, 53, 69), ForeColor = Color.White, Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
-            btnSalir.Click += (s, e) => this.Close();
+            txtTarifa.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    GuardarNuevoHistorial();
+                    e.SuppressKeyPress = true;
+                }
+            };
 
-            gbNuevoRegistro.Controls.AddRange(new Control[] { lblRateChangeDate, dtpRateChangeDate, lblRate, txtRate, lblPayFrequency, cbPayFrequency, btnGuardar, btnSalir });
+            Label lblNuevo = new Label
+            {
+                Text = "Registrar nuevo cambio salarial",
+                Location = new Point(25, 8),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = EstiloUI.Marino
+            };
 
-            // DataGridView
-            dgvPayHistory = new DataGridView { Dock = DockStyle.Fill };
+            panelNuevo.Controls.Add(lblNuevo);
+            panelNuevo.Controls.Add(
+                EstiloUI.CrearEtiqueta("Fecha del cambio", 25, 28));
+            panelNuevo.Controls.Add(
+                EstiloUI.CrearEtiqueta("Tarifa", 205, 28));
+            panelNuevo.Controls.Add(
+                EstiloUI.CrearEtiqueta("Frecuencia de pago", 375, 28));
+            panelNuevo.Controls.Add(dtpFecha);
+            panelNuevo.Controls.Add(txtTarifa);
+            panelNuevo.Controls.Add(cmbFrecuencia);
+            panelNuevo.Controls.Add(btnGuardar);
 
-            this.Controls.Add(dgvPayHistory);
-            this.Controls.Add(gbNuevoRegistro);
-            this.Controls.Add(panelSuperior);
+            // TABLA
+            dgvHistorial = new DataGridView();
+            EstiloUI.ConfigurarGrid(dgvHistorial);
+
+            dgvHistorial.DataBindingComplete += (s, e) =>
+            {
+                if (dgvHistorial.Columns["Tarifa"] != null)
+                    dgvHistorial.Columns["Tarifa"]
+                        .DefaultCellStyle.Format = "N2";
+
+                if (dgvHistorial.Columns["Fecha del cambio"] != null)
+                    dgvHistorial.Columns["Fecha del cambio"]
+                        .DefaultCellStyle.Format = "dd/MM/yyyy";
+
+                if (dgvHistorial.Columns["Última modificación"] != null)
+                    dgvHistorial.Columns["Última modificación"]
+                        .DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+            };
+
+            this.Controls.Add(dgvHistorial);
+            this.Controls.Add(panelNuevo);
+            this.Controls.Add(panelConsulta);
+            this.Controls.Add(panelAcciones);
+            this.Controls.Add(encabezado);
         }
 
-        private void ConfigurarDataGridView()
+        private bool TryObtenerIdEmpleado(out int id)
         {
-            dgvPayHistory.ReadOnly = true;
-            dgvPayHistory.AllowUserToAddRows = false;
-            dgvPayHistory.AllowUserToDeleteRows = false;
-            dgvPayHistory.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPayHistory.MultiSelect = false;
-            dgvPayHistory.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            if (!int.TryParse(txtId.Text.Trim(), out id) || id <= 0)
+            {
+                MessageBox.Show(
+                    "Ingresa un ID de empleado válido.",
+                    "Validación",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
 
-            dgvPayHistory.EnableHeadersVisualStyles = false;
-            dgvPayHistory.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(30, 61, 89);
-            dgvPayHistory.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dgvPayHistory.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            dgvPayHistory.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 247, 250);
+                return false;
+            }
+
+            return true;
+        }
+
+        // Acepta "25.50" y "25,50" sin confundir el punto con separador
+        // de miles.
+        private static bool TryParseTarifa(string texto, out decimal tarifa)
+        {
+            texto = (texto ?? "").Trim();
+
+            return decimal.TryParse(
+                       texto,
+                       NumberStyles.AllowDecimalPoint,
+                       CultureInfo.CurrentCulture,
+                       out tarifa)
+                   || decimal.TryParse(
+                       texto,
+                       NumberStyles.AllowDecimalPoint,
+                       CultureInfo.InvariantCulture,
+                       out tarifa);
+        }
+
+        // Devuelve null si el empleado no existe.
+        private string ObtenerResumenEmpleado(SqlConnection con, int id)
+        {
+            string consulta = @"
+                SELECT
+                    E.FirstName,
+                    E.LastName,
+                    E.JobTitle,
+                    E.CurrentFlag,
+                    P.Rate,
+                    P.RateChangeDate
+                FROM HumanResources.Employee E
+                OUTER APPLY
+                (
+                    SELECT TOP 1 Rate, RateChangeDate
+                    FROM HumanResources.EmployeePayHistory
+                    WHERE BusinessEntityID = E.BusinessEntityID
+                    ORDER BY RateChangeDate DESC
+                ) P
+                WHERE E.BusinessEntityID = @Id;";
+
+            using (SqlCommand cmd = new SqlCommand(consulta, con))
+            {
+                cmd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+
+                using (SqlDataReader r = cmd.ExecuteReader())
+                {
+                    if (!r.Read())
+                        return null;
+
+                    string resumen =
+                        r["FirstName"] + " " + r["LastName"] +
+                        "  |  " + r["JobTitle"] +
+                        "  |  " +
+                        (Convert.ToBoolean(r["CurrentFlag"])
+                            ? "Activo"
+                            : "Inactivo");
+
+                    if (r["Rate"] != DBNull.Value)
+                    {
+                        resumen +=
+                            "\nTarifa vigente: " +
+                            Convert.ToDecimal(r["Rate"]).ToString("N2") +
+                            " (desde " +
+                            Convert.ToDateTime(r["RateChangeDate"])
+                                .ToString("dd/MM/yyyy") + ")";
+                    }
+                    else
+                    {
+                        resumen += "\nEste empleado aún no tiene tarifas registradas.";
+                    }
+
+                    return resumen;
+                }
+            }
         }
 
         private void CargarHistorial()
         {
-            if (!int.TryParse(txtBusinessEntityID.Text.Trim(), out int empId))
-            {
-                MessageBox.Show("Ingrese un ID de empleado válido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            int id;
 
-            string query = @"SELECT 
-                                BusinessEntityID AS [ID Empleado],
-                                RateChangeDate AS [Fecha de Cambio],
-                                Rate AS [Tarifa Salarial],
-                                PayFrequency AS [Frecuencia Pago],
-                                ModifiedDate AS [Última Modificación]
-                             FROM HumanResources.EmployeePayHistory
-                             WHERE BusinessEntityID = @BusinessEntityID
-                             ORDER BY RateChangeDate DESC";
+            if (!TryObtenerIdEmpleado(out id))
+                return;
+
+            string consulta = @"
+                SELECT
+                    BusinessEntityID AS [ID Empleado],
+                    RateChangeDate AS [Fecha del cambio],
+                    Rate AS [Tarifa],
+                    CASE PayFrequency
+                        WHEN 1 THEN 'Mensual'
+                        WHEN 2 THEN 'Quincenal'
+                        ELSE CAST(PayFrequency AS VARCHAR(10))
+                    END AS [Frecuencia de pago],
+                    ModifiedDate AS [Última modificación]
+                FROM HumanResources.EmployeePayHistory
+                WHERE BusinessEntityID = @Id
+                ORDER BY RateChangeDate DESC;";
 
             try
             {
                 using (SqlConnection con = ConexionSQL.ObtenerConexion())
                 {
-                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    string resumen = ObtenerResumenEmpleado(con, id);
+
+                    if (resumen == null)
                     {
-                        cmd.Parameters.AddWithValue("@BusinessEntityID", empId);
-                        SqlDataAdapter da = new SqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
+                        dgvHistorial.DataSource = null;
+                        lblResumen.Text = "";
+                        lblTotal.Text = "Registros encontrados: 0";
 
-                        dgvPayHistory.DataSource = dt;
+                        MessageBox.Show(
+                            "No existe un empleado con el ID " + id + ".",
+                            "Empleado no encontrado",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
 
-                        if (dgvPayHistory.Columns["Tarifa Salarial"] != null)
-                            dgvPayHistory.Columns["Tarifa Salarial"].DefaultCellStyle.Format = "C2";
-                        if (dgvPayHistory.Columns["Fecha de Cambio"] != null)
-                            dgvPayHistory.Columns["Fecha de Cambio"].DefaultCellStyle.Format = "dd/MM/yyyy";
-                        if (dgvPayHistory.Columns["Última Modificación"] != null)
-                            dgvPayHistory.Columns["Última Modificación"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+                        return;
+                    }
 
-                        if (dt.Rows.Count == 0)
+                    lblResumen.Text = resumen;
+
+                    using (SqlCommand cmd = new SqlCommand(consulta, con))
+                    {
+                        cmd.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+
+                        DataTable tabla = new DataTable();
+
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                         {
-                            MessageBox.Show("No se encontraron registros salariales para este empleado.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            da.Fill(tabla);
                         }
+
+                        dgvHistorial.DataSource = tabla;
+
+                        lblTotal.Text =
+                            "Registros encontrados: " + tabla.Rows.Count;
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al consultar historial: {ex.Message}", "Error SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "No se pudo consultar el historial.\n\n" + ex.Message,
+                    "Error SQL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
         private void GuardarNuevoHistorial()
         {
-            if (!int.TryParse(txtBusinessEntityID.Text.Trim(), out int empId))
+            int id;
+
+            if (!TryObtenerIdEmpleado(out id))
+                return;
+
+            decimal tarifa;
+
+            if (!TryParseTarifa(txtTarifa.Text, out tarifa) || tarifa <= 0)
             {
-                MessageBox.Show("Por favor consulte un ID de empleado válido antes de guardar.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    "Ingresa una tarifa válida mayor a 0.",
+                    "Validación",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
                 return;
             }
 
-            if (!decimal.TryParse(txtRate.Text.Trim(), out decimal rate) || rate <= 0)
+            ItemFrecuencia frecuencia =
+                cmbFrecuencia.SelectedItem as ItemFrecuencia;
+
+            if (frecuencia == null)
             {
-                MessageBox.Show("Ingrese una tarifa salarial válida mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    "Selecciona la frecuencia de pago.",
+                    "Validación",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
                 return;
             }
 
-            DateTime fechaCambio = dtpRateChangeDate.Value.Date;
-            dynamic selectedFreq = cbPayFrequency.SelectedItem;
-            byte payFreq = (byte)selectedFreq.Value;
-
-            // Validar Duplicados
-            string checkQuery = @"SELECT COUNT(1) FROM HumanResources.EmployeePayHistory 
-                                  WHERE BusinessEntityID = @BusinessEntityID AND RateChangeDate = @RateChangeDate";
-
-            string insertQuery = @"INSERT INTO HumanResources.EmployeePayHistory (BusinessEntityID, RateChangeDate, Rate, PayFrequency, ModifiedDate)
-                                   VALUES (@BusinessEntityID, @RateChangeDate, @Rate, @PayFrequency, GETDATE())";
+            DateTime fecha = dtpFecha.Value.Date;
 
             try
             {
                 using (SqlConnection con = ConexionSQL.ObtenerConexion())
                 {
-                    // 1. Check de duplicado
-                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, con))
-                    {
-                        checkCmd.Parameters.AddWithValue("@BusinessEntityID", empId);
-                        checkCmd.Parameters.AddWithValue("@RateChangeDate", fechaCambio);
+                    string resumen = ObtenerResumenEmpleado(con, id);
 
-                        int existe = (int)checkCmd.ExecuteScalar();
-                        if (existe > 0)
+                    if (resumen == null)
+                    {
+                        MessageBox.Show(
+                            "No existe un empleado con el ID " + id + ".",
+                            "Empleado no encontrado",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+
+                        return;
+                    }
+
+                    DialogResult respuesta = MessageBox.Show(
+                        "¿Registrar una tarifa de " + tarifa.ToString("N2") +
+                        " (" + frecuencia.Texto + ") con fecha " +
+                        fecha.ToString("dd/MM/yyyy") + " para:\n\n" +
+                        resumen.Split('\n')[0] + "?",
+                        "Confirmar operación",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (respuesta != DialogResult.Yes)
+                        return;
+
+                    // Evitar duplicados por empleado y fecha.
+                    using (SqlCommand check = new SqlCommand(@"
+                        SELECT COUNT(1)
+                        FROM HumanResources.EmployeePayHistory
+                        WHERE BusinessEntityID = @Id
+                          AND RateChangeDate = @Fecha;", con))
+                    {
+                        check.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                        check.Parameters.Add("@Fecha", SqlDbType.DateTime)
+                            .Value = fecha;
+
+                        if (Convert.ToInt32(check.ExecuteScalar()) > 0)
                         {
-                            MessageBox.Show("Ya existe un registro salarial para este empleado en la fecha seleccionada.", "Duplicado Detectado", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            MessageBox.Show(
+                                "Ya existe un registro salarial para este " +
+                                "empleado en la fecha seleccionada.",
+                                "Registro duplicado",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+
                             return;
                         }
                     }
 
-                    // 2. Inserción
-                    using (SqlCommand insertCmd = new SqlCommand(insertQuery, con))
+                    using (SqlCommand insertar = new SqlCommand(@"
+                        INSERT INTO HumanResources.EmployeePayHistory
+                            (BusinessEntityID, RateChangeDate, Rate,
+                             PayFrequency, ModifiedDate)
+                        VALUES
+                            (@Id, @Fecha, @Tarifa, @Frecuencia, GETDATE());",
+                        con))
                     {
-                        insertCmd.Parameters.AddWithValue("@BusinessEntityID", empId);
-                        insertCmd.Parameters.AddWithValue("@RateChangeDate", fechaCambio);
-                        insertCmd.Parameters.AddWithValue("@Rate", rate);
-                        insertCmd.Parameters.AddWithValue("@PayFrequency", payFreq);
+                        insertar.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                        insertar.Parameters.Add("@Fecha", SqlDbType.DateTime)
+                            .Value = fecha;
+                        insertar.Parameters.Add("@Tarifa", SqlDbType.Money)
+                            .Value = tarifa;
+                        insertar.Parameters.Add("@Frecuencia", SqlDbType.TinyInt)
+                            .Value = frecuencia.Valor;
 
-                        insertCmd.ExecuteNonQuery();
-                        MessageBox.Show("¡Registro de tarifa salarial guardado con éxito!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        insertar.ExecuteNonQuery();
                     }
                 }
 
-                // Limpiar campo de texto y refrescar la vista de inmediato
-                txtRate.Clear();
+                MessageBox.Show(
+                    "El cambio salarial se registró correctamente.",
+                    "Operación exitosa",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                txtTarifa.Clear();
                 CargarHistorial();
+            }
+            catch (SqlException ex)
+            {
+                if (ex.Number == 547)
+                {
+                    MessageBox.Show(
+                        "La base de datos rechazó la tarifa porque no cumple " +
+                        "sus reglas (por ejemplo, un rango permitido).\n\n" +
+                        ex.Message,
+                        "Tarifa no válida",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "No se pudo guardar el registro salarial.\n\n" +
+                        ex.Message,
+                        "Error SQL",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar el registro salarial: {ex.Message}", "Error SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "No se pudo guardar el registro salarial.\n\n" +
+                    ex.Message,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
-        }
-        private void FrmPayHistory_Load(object sender, EventArgs e)
-        {
-            // Método para satisfacer la referencia del diseñador
         }
     }
 }

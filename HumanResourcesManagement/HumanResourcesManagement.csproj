@@ -53,6 +53,7 @@
       <DependentUpon>BusEmpl.cs</DependentUpon>
     </Compile>
     <Compile Include="ConexionSQL.cs" />
+    <Compile Include="EstiloUI.cs" />
     <Compile Include="ExportadorCSV.cs" />
     <Compile Include="FrmConDepaTurnos.cs">
       <SubType>Form</SubType>

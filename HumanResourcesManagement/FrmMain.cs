@@ -190,7 +190,7 @@ namespace HumanResourcesManagement
 
             AgregarTarjeta(panelTarjetas, "Turnos",
                 "Consultar departamentos y turnos",
-                "FrmConDepartamentoTurnos");
+                "FrmConDepaTurnos");
 
             AgregarTarjeta(panelTarjetas, "Consultas",
                 "Consultar información de empleados",
